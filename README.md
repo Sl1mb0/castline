@@ -35,13 +35,13 @@ Original `netcat` features included in `castline`:
 
 Additional features of `castline`:
 
-- Provide information about packet loss in relation to packet size/amount.
-      - Must know how many packets or "requests" are being 
-        responded to successfully; how many aren't
-      - run three different tests with three different quantities each of size/amount
-        and inform user of percentage of packets not responded to
-      - allow user to specify custom packet size/amount; will output total and
-        percent of packets lost
+- Provides information about packet loss in relation to packet size/amount.
+  - Must know how many packets or "requests" are being 
+    responded to successfully; how many aren't
+  - runs three different tests with three different quantities each of size/amount
+    and informs user of percentage of packets not responded to
+  - allow user to specify custom packet size/amount; will output total and
+    percent of packets lost
 
 
 My goal is to add more features to `castline`, but I'm a network n00b 
