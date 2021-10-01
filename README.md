@@ -33,14 +33,13 @@ Original `netcat` features included in `castline`:
 
 Additional features of `castline`:
 
-- The `--feeding-frenzy` option
-  - Provides general information about the ratio of packet size/amount
-    that begins to stress the target system
+- Provide information about packet loss in relation to packet size/amount.
       - Must know how many packets or "requests" are being 
         responded to successfully; how many aren't
-      - run three different tests with three different ratios
-        to provide some general information about
-        the network's capabilities
+      - run three different tests with three different quantities each of size/amount
+        and inform user of percentage of packets not responded to
+      - allow user to specify custom packet size/amount; will output total and
+        percent of packets lost
 
 
 My goal is to add more features to `castline`, but I'm a network n00b 
