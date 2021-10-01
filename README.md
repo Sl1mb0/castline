@@ -1,19 +1,21 @@
 Castline
 =======
 
-`castline` is a modern implementation of `nc` in Rust. It's 
-called `castline` because `netcrab` sounded dumb, and connection 
-requests are like fishing.
+`castline` is my personal spin on `nc` in Rust. It's
+called `castline` because `netcrab` sounded dumb, and sending packets
+to your mom's house is like catch and release fishing.
 
-I was inspired to write this project after reading more about `nc` 
-on Gordon Lyon's blog.  The original `nc` was released in 1995; 
-and that has been the only major release since. I downloaded the source 
-from there and that is the only major reference for this project. 
-I'm not sure if I can include the same level of cheekiness
-in the original `nc` tarball, but I can certainly try.
+(Future employers should acknowledge that there is a substantial
+amount of cheek in the original `nc` tarball, and the above is my attempt
+at maintaining it. Yes I know it's in poor taste; and no I won't make these jokes
+if you hire me. Not unless explicit comic relief is requested)
 
-`castline` is only supported on Linux for now; but it is my hope
-to add it to MacOS in the future. Since Microsoft has somewhat
+I was inspired to write this project after reading more about `nc`
+on Gordon Lyon's blog.  The original `nc` was released in 1995;
+and that has been the only major release since. I downloaded the source
+from there and that is the only major source of reference for this project.
+
+`castline` is supported on Linux and MacOS. Since Microsoft has somewhat
 improved I might and get around to adding it for Windows. Though I'm not 
 sure Hobbit would approve.
 
@@ -62,3 +64,5 @@ target: given a M-N range, `castline` will try connecting to every port within t
           specified when `amount:size` is passed as an arg; will run one test for each arg passed
           and provide information about packet loss
 ```
+
+## Installation
