@@ -1,56 +1,51 @@
-// CASTLINE RELEASE 0.1.0 
-/// The implementation of `castline`. A descendant of `netcat`
-/// that can do some stress testing. The key added feature of
-/// `castline` is the `--feeding-frenzy` option. Which provides 
-/// stress-test information about a specified host.
-/// 
-/// `castline` uses the `tacklebox` crate, which provides an API
-/// for the network related subsystems that both Linux and MacOS use.
-/// `tacklebox` completely abstracts away system differences, allowing
-/// `castline` to just focus on good ol' fishin...
+//! # castline driver
+//! <p> Usage: <em> castline [COMMAND] [ARGS] </em>
+//! where COMMAND is one of: </p>
+//! <ul>
+//! <li>catch</li>
+//! <li>trap</li>
+//! <li>fish</li>
+//! </ul>
 
-use tacklebox::*;
+use structopt::StructOpt;
 
-/// Informatin about the specified host.
-#[derive(Debug, Clone, Copy)]
-struct Host {
-    name: &str,
-    addr: &str,
-    iaddr: InAddr,
-}
-
-impl Host {
-    /// Produce a `Host` from a resolved 
-    /// numeric or alphabetic IPv4 address.
-    fn new() -> Host {
-        todo!()
-    }
-}
-
-/// Information about a port.
-struct Port {
-    name: &str,
-    anum: &str,
-    num: u16,
-}
-
-impl Port {
-    /// Produce a `Port` that corresponds to the actual port 
-    /// specified. Can be a numeric or alphabetic value.
-    fn new() -> Port {
-        todo!()
-    }
-}
-
-/// Some errors that might happen.
-enum HostErr {
-    Error0,
-    UnknownHost,
-    HostNameLookupFail,
-    UnknownServerErr,
-    NoAddr,
+/// Define command line options.
+#[derive(Debug, StructOpt)]
+enum Opt {
+    #[structopt(
+        name = "catch",
+        about = "Displays internal information of datagrams on the specified port",
+    )]
+    Catch,
+    #[structopt(
+        name = "trap",
+        about = "Given argument [AMOUNT]:[SIZE]; displays percentage of packets not acknowledged"
+    )]
+    Trap,
+    #[structopt(
+        name = "fish",
+        about = "Displays meta-information about specified port's usage"
+    )]
+    Fish,
 }
 
 fn main() {
-    
+    let opt = Opt::from_args();
+    match opt {
+        Opt::Catch => run_catch(),
+        Opt::Trap => run_trap(),
+        Opt::Fish =>  run_fish(),
+    }
+}
+
+fn run_catch() {
+    println!("catch");
+}
+
+fn run_trap() {
+    println!("trap");
+}
+
+fn run_fish() {
+    println!("fish");
 }
