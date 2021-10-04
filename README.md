@@ -11,14 +11,16 @@ and the last major release was in 1996. I downloaded the source
 from there as a reference for this project.
 
 `castline` is supported on Linux and MacOS. Since Microsoft has somewhat
-improved it's reputation in the open-source community I might and get around
+improved it's reputation in the open-source community I might get around
 to adding support for Windows. Though I'm not sure Hobbit would approve.
+The fact that Windows isn't _really_ POSIX compliant makes this a lot harder.
 
 ## Features
 
 `castline` includes several major features from `nc`:
 
-- Outbound or inbound connections; TCP or UDP; from _any_ port
+- Outbound or inbound connections; TCP or UDP; from _almost_  any port
+  - I hope to change this
 - Full DNS reverse/forward checking; with warnings
 - Port-scanning abilities; built-in randomizer
 - Loose source-routing capability
@@ -30,20 +32,58 @@ And some original features of it's own:
 - Display information for inbound/outbound datagrams on specific ports
 - Automatic DNS lookups for numeric IP addresses
 
-I think it's important to mention that the original design idea for `nc` was
-simply a `cat` like utility for networks. Given some port on a local machine,
-display all inbound/outbound information on that port. Obviously `nc` does a
-bit more than that; and so does `castline`.
+The original design idea for `nc` was simply a `cat` like utility for networks.
+Given some port on a local machine, display all inbound/outbound information on
+that port. Obviously `nc` does a bit more than that; and so does `castline`.
+For the most part however, `castline` will output to stdout until either the
+connection drops, stops responding, or ^C is called.
 
-However, I really wanted to focus on providing as much information about a host/port
-as possible, which is why `castline` can tell you about packet loss relative to a specified amount and size;
-as well as display information about inbound/outbound datagrams for a given port.
+I really wanted to focus on providing as much information about a host/port
+as possible, which is why `castline` can tell you about packet loss relative
+to a specified amount and size; as well as display information about
+inbound/outbound datagrams for a given port. This is also why there is automatic
+DNS lookup for numeric IP addresses, so we can give the user as much information
+as possible.
+
+This is also why `castline` doesn't provide packet-generating capabilities.
+The original `nc` README says that `nc` is not an "arbitrary packet generator"
+_despite_ the fact that on Insecure.org `nc` is at the top of the packet-crafter
+section. :shrug:
+
+## Usage
+
+#### `castline catch [PORT]`
+
+Display internal information of inbound/outbound datagrams on a given port.
+
+#### `castline trap [HOST] [AMOUNT]:[SIZE]`
+
+Generates $AMOUNT dummy packets, each with [SIZE] amount of data. Sends the packets
+to [HOST] from a random port and records how many packets received an ackowledgement;
+displays percentage of packets that were _not_ acknowledged.
+
+#### `castline fish [PORT]`
+
+Inbound/outbound information about a port:
+
+- what process used it
+- what time data was sent/received
+- where data went (inbound or outbound; address)
+- size of packet read
+- if given a range, will randomize ports that are scanned
+
+## Options
+
+| Flag | Description |
+|------|-------------|
+|      |             |
+|      |             |
+
 
 ## References
 
 [nc-tarball][NCTAR]
 [RFC793][TCPImpl]
-
 
 
 [NCTAR]:https://sectools.org/tool/netcat/
