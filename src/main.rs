@@ -14,7 +14,7 @@ use structopt::StructOpt;
 enum Opt {
     #[structopt(
         name = "catch",
-        about = "Displays internal information of datagrams on the specified port",
+        about = "Displays internal information of datagrams on the specified port"
     )]
     Catch,
     #[structopt(
@@ -34,7 +34,7 @@ fn main() {
     match opt {
         Opt::Catch => run_catch(),
         Opt::Trap => run_trap(),
-        Opt::Fish =>  run_fish(),
+        Opt::Fish => run_fish(),
     }
 }
 
