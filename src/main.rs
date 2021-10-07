@@ -9,6 +9,8 @@
 
 use structopt::StructOpt;
 
+mod catch;
+
 /// Define command line options.
 #[derive(Debug, StructOpt)]
 enum Opt {
