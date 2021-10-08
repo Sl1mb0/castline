@@ -9,7 +9,7 @@ struct UdpDatagram {
 }
 
 #[derive(Debug)]
-struct UdpCollector {
+struct UdpHandler {
     // Socket to collect from
     socket: UdpSocket,
     // Amount of datagrams to collect
@@ -17,15 +17,21 @@ struct UdpCollector {
     pub datagrams: Vec<UdpDatagram>,
 }
 
-impl UdpCollector {
-    fn new(amount: u16, socket: UdpSocket) -> UdpCollector {
-        UdpCollector {
+impl UdpHandler {
+    fn new(amount: u16, socket: UdpSocket) -> UdpHandler {
+        UdpHandler {
             socket,
             amount,
             datagrams: Default::default(),
         }
     }
 
+    // TODO handle errors
+    fn send<'a>(&self, data: &'a [u8]) {
+        self.socket.send(data).unwrap();
+    }
+
+    // TODO handle errors
     fn collect(&mut self) {
         for _ in 0..self.amount {
             // max size of a udp datagram.
@@ -48,16 +54,41 @@ impl UdpCollector {
 struct UdpMetadata<'a> {
     local_address: &'a str,
     remote_address: &'a str,
-    datagrams: UdpCollector,
+    handler: UdpHandler,
+    // dummy data that's sent to `remote_address`
+    // each time `send()` is called; is `None`
+    // unless `set_payload()` is called.
+    payload: Option<&'a [u8]>,
 }
 
 impl<'a> UdpMetadata<'a> {
-    fn new(local: &str, remote: &str) -> Self {
-        todo!()
+    // TODO handle errors
+    fn new(local: &'a str, remote: &'a str) -> Self {
+        let socket = UdpSocket::bind(local).unwrap();
+        socket.connect(remote).unwrap();
+
+        UdpMetadata {
+            local_address: &*local,
+            remote_address: &*remote,
+            handler: UdpHandler::new(1, socket),
+            payload: None,
+        }
     }
 
+    // TODO handle errors
+    fn send(&self) {
+        if let Some(payload) = self.payload {
+            self.handler.send(&payload)
+        }
+    }
+
+    fn set_payload(&mut self, data: &'a [u8]) {
+        self.payload = Some(&*data)
+    }
+
+    // TODO handle errors
     fn collect(&mut self) {
-        self.datagrams.collect();
+        self.handler.collect();
     }
 }
 
@@ -65,23 +96,21 @@ impl<'a> UdpMetadata<'a> {
 #[test]
 fn random_socket() {
     let rtx = UdpSocket::bind("127.0.0.1:3400").expect("failed to bind to address!");
+    let tx = UdpSocket::bind("127.0.0.1:8080").expect("failed to bind to address!");
+
     rtx.connect("127.0.0.1:8080")
         .expect("connect function failed!");
-
-    let tx = UdpSocket::bind("127.0.0.1:8080").expect("failed to bind to address!");
     tx.connect("127.0.0.1:3400")
         .expect("connect function failed!");
 
     let dummy_data = [1u8; 569];
     tx.send(&dummy_data).expect("couldn't send message!");
+    tx.send(&dummy_data).expect("couldn't send message!");
 
-    let mut udp_collector = UdpCollector::new(1, rtx);
-    udp_collector.collect();
+    let mut udp_handler = UdpHandler::new(2, rtx);
+    udp_handler.collect();
 
-    assert!(udp_collector.datagrams.len() == 1);
-    // This took some playing around to get, but it
-    // holds true over multiple tests, which is certainly interesting.
-    // Is this the "minimum" packet size for my mac?
-    // TODO ask teacher..
-    assert!(udp_collector.datagrams[0].data.len() == 249);
+    assert!(udp_handler.datagrams.len() == 2);
+    assert!(udp_handler.datagrams[0].data.len() == 249);
+    assert!(udp_handler.datagrams[1].data.len() == 249);
 }
