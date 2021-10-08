@@ -18,7 +18,7 @@ enum Opt {
         name = "catch",
         about = "Displays internal information of datagrams on the specified port"
     )]
-    Catch,
+    Catch(catch::Options),
     #[structopt(
         name = "trap",
         about = "Given argument [AMOUNT]:[SIZE]; displays percentage of packets not acknowledged"
@@ -34,7 +34,7 @@ enum Opt {
 fn main() {
     let opt = Opt::from_args();
     match opt {
-        Opt::Catch => run_catch(),
+        Opt::Catch(_) => run_catch(),
         Opt::Trap => run_trap(),
         Opt::Fish => run_fish(),
     }
