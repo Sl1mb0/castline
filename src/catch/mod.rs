@@ -70,8 +70,7 @@ pub fn run(options: &Options) {
 
             if !options.verbose {
                 print_total_stats(time, total_bytes, received);
-            }
-            else {
+            } else {
                 print_datagram_stats(datagrams);
             }
         }
@@ -96,31 +95,42 @@ fn set_amount_and_time_tcp(_options: &Options) {
 
 fn print_total_stats(total_time: u64, total_bytes: u32, received: f32) {
     println!();
+
     println!(
-        "{time:<width$}{bytes:<width$}{received:<width$}",
+        "{time:>width$}{bytes:>width$}{received:>width$}",
         time = "time",
         bytes = "bytes",
         received = "received",
         width = 10
     );
-    println!("{line:=<width$}", line = "", width = 28);
+
+    println!(
+        "{line: >space_width$}{line:=>header_width$}",
+        line = "",
+        space_width = 6,
+        header_width = 24
+    );
 
     let mut received = received.to_string();
     received.push_str("%");
 
     let mut total_time = total_time.to_string();
     total_time.push_str("s");
+
     println!(
-        "{time:<width$}{bytes:<width$}{received:<width$}",
+        "{time:>width$}{bytes:>width$}{received:>width$}",
         time = &total_time[..],
         bytes = total_bytes,
         received = received,
         width = 10
     );
+
+    println!();
 }
 
 fn print_datagram_stats(datagrams: Vec<(udp::UdpDatagram, u32)>) {
     println!();
+
     println!(
         "{src:<width$}{dst:<width$}{len:<width$}{chksm:<width$}{time:<width$}{bytes:<width$}",
         src = "src",
@@ -131,6 +141,7 @@ fn print_datagram_stats(datagrams: Vec<(udp::UdpDatagram, u32)>) {
         bytes = "bytes",
         width = 12
     );
+
     println!("{line:=<width$}", line = "", width = 65);
 
     for datagram in &datagrams {
