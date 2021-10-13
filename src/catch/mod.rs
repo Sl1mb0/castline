@@ -11,8 +11,8 @@ pub struct Options {
     pub protocol: Protocol,
     #[structopt(help = "Socket to send datagrams from")]
     pub local: String,
-    #[structopt(help = "Socket to send datagrams to")]
-    pub remote: Option<String>,
+    #[structopt(short, help = "Verbose output")]
+    pub verbose: bool,
     #[structopt(short = "n", help = "Amount of datagrams to collect")]
     pub amount: Option<u16>,
     #[structopt(short, long, help = "Time to spend waiting for individual datagrams")]
@@ -68,11 +68,11 @@ pub fn run(options: &Options) {
 
             let received = datagrams.len() as f32 / options.amount.unwrap() as f32;
 
-            print_total_stats(time, total_bytes, received);
-
-            print_datagram_stats_header();
-            for datagram in &datagrams {
-                print_udp(&datagram);
+            if !options.verbose {
+                print_total_stats(time, total_bytes, received);
+            }
+            else {
+                print_datagram_stats(datagrams);
             }
         }
         Protocol::Tcp => {
@@ -119,7 +119,7 @@ fn print_total_stats(total_time: u64, total_bytes: u32, received: f32) {
     );
 }
 
-fn print_datagram_stats_header() {
+fn print_datagram_stats(datagrams: Vec<(udp::UdpDatagram, u32)>) {
     println!();
     println!(
         "{src:<width$}{dst:<width$}{len:<width$}{chksm:<width$}{time:<width$}{bytes:<width$}",
@@ -132,6 +132,10 @@ fn print_datagram_stats_header() {
         width = 12
     );
     println!("{line:=<width$}", line = "", width = 65);
+
+    for datagram in &datagrams {
+        print_udp(&datagram);
+    }
 }
 
 fn print_udp(_datagram: &(udp::UdpDatagram, u32)) {
