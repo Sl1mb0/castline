@@ -45,32 +45,41 @@ inbound/outbound datagrams for a given port. This is also why there is automatic
 DNS lookup for numeric IP addresses, so we can give the user as much information
 as possible.
 
-This is also why `castline` doesn't provide packet-generating capabilities.
-The original `nc` README says that `nc` is not an "arbitrary packet generator"
-_despite_ the fact that on Insecure.org `nc` is at the top of the packet-crafter
-section. :shrug:
-
 ## Usage
 
-#### `castline catch [PORT]`
+#### `castline catch [PROTOCOL] [LOCALHOST] [FLAGS]`
 
-Display internal information of inbound/outbound datagrams on a given port.
+Display internal information of inbound datagrams on a given port.
+Use `-n` to specify the _amount_ of datarams to collect at a time;
+or use `--time` (or `-t`) to specify the _duration_ to collect datagrams
+for.
+
+If no datagrams are read, a message will print to stdout after either
+60 seconds or the time that the user has specified.
+
+#### `castline cast [PROTOCOL] [LOCALHOST] [REMOTEHOST] [DATA]`
+
+Send `[DATA]` to `[REMOTEHOST]` from `[LOCALHOST]` using the
+specified `[PROTOCOL]`.
 
 #### `castline trap [HOST] [AMOUNT]:[SIZE]`
 
-Generates $AMOUNT dummy packets, each with [SIZE] amount of data. Sends the packets
+Generates [AMOUNT] dummy TCP packets, each with [SIZE] amount of data. Sends the packets
 to [HOST] from a random port and records how many packets received an ackowledgement;
-displays percentage of packets that were _not_ acknowledged.
+displays percentage of packets that were _not_ acknowledged. if given a range of addresses
+and ports, will send from ports in parallel.
 
-#### `castline fish [PORT]`
+#### `castline fish [LOCALHOST] [FLAGS] [REMOTEHOST]`
 
-Inbound/outbound information about a port:
+Inbound/outbound information about a port;
+DNS resolver for addresses passed as args:
 
 - what process used it
 - what time data was sent/received
 - where data went (inbound or outbound; address)
 - size of packet read
 - if given a range, will randomize ports that are scanned
+- DNS resolution warnings and shite
 
 ## Options
 
@@ -82,7 +91,7 @@ Inbound/outbound information about a port:
 
 ## References
 
-[nc-tarball][NCTAR]
+[nc-tarball][NCTAR]  
 [RFC793][TCPImpl]
 
 
