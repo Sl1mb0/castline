@@ -66,4 +66,4 @@ For details on how to use `castline`, see the [guide][GUIDE].
 
 [NCTAR]:https://sectools.org/tool/netcat/
 [TCPImpl]:https://datatracker.ietf.org/doc/html/rfc793
-[GUIDE]:https://github.com/sl1mb0/castline/GUIDE.md
+[GUIDE]:./GUIDE.md
