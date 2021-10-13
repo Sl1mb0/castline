@@ -112,7 +112,7 @@ fn print_total_stats(total_time: u64, total_bytes: u32, received: f32) {
     total_time.push_str("s");
     println!(
         "{time:<width$}{bytes:<width$}{received:<width$}",
-        time = total_time,
+        time = &total_time[..],
         bytes = total_bytes,
         received = received,
         width = 10
