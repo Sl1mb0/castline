@@ -10,9 +10,9 @@ pub struct Options {
     #[structopt(help = "Tranport protocol used")]
     pub protocol: Protocol,
     #[structopt(help = "Socket to send datagrams from")]
-    pub local_socket: String,
+    pub local: String,
     #[structopt(help = "Socket to send datagrams to")]
-    pub remote_socket: Option<String>,
+    pub remote: Option<String>,
     #[structopt(short = "n", help = "Amount of datagrams to collect")]
     pub amount: Option<u16>,
     #[structopt(short, long, help = "Time to spend waiting for individual datagrams")]
@@ -50,11 +50,11 @@ impl fmt::Display for Protocol {
     }
 }
 
-pub fn run(_options: &Options) {
-    match _options.protocol {
+pub fn run(options: &Options) {
+    match options.protocol {
         Protocol::Udp => {
-            let mut udp_metadata = udp::UdpMetadata::new(&_options.local_socket[..]);
-            set_amount_and_time_udp(_options, &mut udp_metadata);
+            let mut udp_metadata = udp::Metadata::new(&options.local[..]);
+            set_amount_and_time_udp(options, &mut udp_metadata);
             udp_metadata.collect();
         }
         Protocol::Tcp => {
@@ -63,12 +63,12 @@ pub fn run(_options: &Options) {
     }
 }
 
-fn set_amount_and_time_udp(options: &Options, metadata: &mut udp::UdpMetadata) {
+fn set_amount_and_time_udp(options: &Options, udp_metadata: &mut udp::Metadata) {
     if let Some(amount) = options.amount {
-        metadata.set_amount(amount);
+        udp_metadata.set_amount(amount);
     }
     if let Some(time) = options.time {
-        metadata.set_time(time);
+        udp_metadata.set_time(time);
     }
 }
 
