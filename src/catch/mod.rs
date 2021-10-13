@@ -7,12 +7,14 @@ pub mod udp;
 
 #[derive(Debug, StructOpt)]
 pub struct Options {
-    #[structopt(required = true, help = "Tranport protocol used")]
+    #[structopt(help = "Tranport protocol used")]
     pub protocol: Protocol,
-    #[structopt(required = true, help = "Socket to send datagrams from")]
+    #[structopt(help = "Socket to send datagrams from")]
     pub local_socket: String,
-    #[structopt(required = true, help = "Socket to send datagrams to")]
-    pub remote_socket: String,
+    #[structopt(help = "Socket to send datagrams to")]
+    pub remote_socket: Option<String>,
+    #[structopt(short = "n", help = "Amount of datagrams to collect")]
+    pub amount: Option<u16>,
 }
 
 #[derive(Error, Debug)]
@@ -46,6 +48,18 @@ impl fmt::Display for Protocol {
     }
 }
 
-fn run_catch() {
-    todo!()
+pub fn run(_options: &Options) {
+    match _options.protocol {
+        Protocol::Udp => {
+            let mut udp_metadata = udp::UdpMetadata::new(&_options.local_socket[..]);
+
+            if let Some(amount) = _options.amount {
+                udp_metadata.set_amount(amount);
+            }
+            udp_metadata.collect();
+        }
+        Protocol::Tcp => {
+            println!("tcp")
+        }
+    }
 }
