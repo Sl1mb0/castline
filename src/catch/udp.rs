@@ -32,7 +32,7 @@ impl UdpHandler {
         }
     }
 
-    fn send<'a>(&self, data: &'a [u8]) -> Result<usize, IoErr>{
+    fn send<'a>(&self, data: &'a [u8]) -> Result<usize, IoErr> {
         let bytes = self.socket.send(data)?;
         Ok(bytes)
     }
@@ -42,6 +42,7 @@ impl UdpHandler {
         Ok(())
     }
 
+    #[inline]
     fn collect(&mut self, amount: u16) -> Result<(), IoErr> {
         let buf: &mut [u8] = &mut [0u8; 65536];
 
@@ -118,7 +119,7 @@ impl<'a> Metadata<'a> {
     }
 
     pub fn collect(&mut self) -> Vec<(UdpDatagram, u32)> {
-        self.handler.collect(self.amount);
+        self.handler.collect(self.amount).unwrap();
         Vec::from(&self.handler.datagrams[..])
     }
 }
