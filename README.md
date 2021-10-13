@@ -49,13 +49,27 @@ as possible.
 
 #### `castline catch [PROTOCOL] [LOCALHOST] [FLAGS]`
 
-Display internal information of inbound datagrams on a given port.
-Use `-n` to specify the _amount_ of datarams to collect at a time;
-or use `--time` (or `-t`) to specify the _duration_ to collect datagrams
-for.
+Display internal information of inbound datagrams and time spent
+waiting for them to appear in the `[LOCALHOST]` buffer.
 
-If no datagrams are read, a message will print to stdout after either
-60 seconds or the time that the user has specified.
+Use `-n` to specify the _amount_ of datarams to collect at a time;
+use `--time` (or `-t`) to specify the _duration_ to spend waiting
+for individual datagrams to appear.
+
+If neither flags are used the default amount is 10 datagrams for a duration of 6 seconds each.
+
+As an example, the following command will attempt to read 5 datagrams
+at a time; and wait 30 seconds for each datagram to appear in
+the socket's buffer. I.e. if the amount of time it takes for each datagram
+to appear in the buffer is 30 seconds each, then the amount of time spent
+collecting the 5 datagrams would be 5x30 = 150 total seconds.
+
+```
+$ castline catch udp 127.0.0.1:3400 -n 5 --time 30
+```
+
+Datagram internals and the time spent waiting for them will then
+"pretty print" to the console.
 
 #### `castline cast [PROTOCOL] [LOCALHOST] [REMOTEHOST] [DATA]`
 
