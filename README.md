@@ -71,6 +71,15 @@ $ castline catch udp 127.0.0.1:3400 -n 5 --time 30
 Datagram internals and the time spent waiting for them will then
 "pretty print" to the console.
 
+##### Options
+
+| Flag | Description |
+|------|-------------|
+| `-n`   |  Specifiy an amount of datagrams to collect |
+|`--time`  | Specify how long to spend waiting for each datagram to appear |
+
+
+
 #### `castline cast [PROTOCOL] [LOCALHOST] [REMOTEHOST] [DATA]`
 
 Send `[DATA]` to `[REMOTEHOST]` from `[LOCALHOST]` using the
@@ -94,14 +103,6 @@ DNS resolver for addresses passed as args:
 - size of packet read
 - if given a range, will randomize ports that are scanned
 - DNS resolution warnings and shite
-
-## Options
-
-| Flag | Description |
-|------|-------------|
-|      |             |
-|      |             |
-
 
 ## References
 
