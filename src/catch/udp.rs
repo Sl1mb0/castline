@@ -2,7 +2,7 @@ extern crate etherparse;
 use etherparse::UdpHeader;
 use std::io;
 use std::net::UdpSocket;
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 #[derive(Default, Debug, Clone)]
 pub struct UdpDatagram {
@@ -32,8 +32,9 @@ impl UdpHandler {
         }
     }
 
-    fn send<'a>(&self, data: &'a [u8]) {
-        self.socket.send(data).unwrap();
+    fn send<'a>(&self, data: &'a [u8]) -> Result<usize, IoErr>{
+        let bytes = self.socket.send(data)?;
+        Ok(bytes)
     }
 
     fn connect<'a>(&self, address: &'a str) -> Result<(), IoErr> {
@@ -42,16 +43,16 @@ impl UdpHandler {
     }
 
     fn collect(&mut self, amount: u16) -> Result<(), IoErr> {
-        let big_buf: &mut [u8] = &mut [0u8; 65536];
+        let buf: &mut [u8] = &mut [0u8; 65536];
 
         self.socket.set_nonblocking(true).unwrap();
         for _ in 0..amount {
             let now = Instant::now();
             'timed: loop {
-                match self.socket.recv(&mut big_buf[..]) {
+                match self.socket.recv(&mut buf[..]) {
                     Ok(bytes) => {
                         let read_time = now.elapsed().as_millis() as u32;
-                        let (header, data) = UdpHeader::read_from_slice(&big_buf)
+                        let (header, data) = UdpHeader::read_from_slice(&buf)
                             .expect("`UdpHeader::read_from_slice()` failed!");
 
                         let mut data = data.to_vec();
@@ -73,7 +74,7 @@ impl UdpHandler {
     }
 }
 
-pub struct UdpMetadata<'a> {
+pub struct Metadata<'a> {
     local: &'a str,
     remote: Option<&'a str>,
     handler: UdpHandler,
@@ -81,10 +82,10 @@ pub struct UdpMetadata<'a> {
     payload: Option<&'a [u8]>,
 }
 
-impl<'a> UdpMetadata<'a> {
+impl<'a> Metadata<'a> {
     pub fn new(socket: &'a str) -> Self {
         let udp_socket = UdpSocket::bind(socket).unwrap();
-        UdpMetadata {
+        Metadata {
             local: &*socket,
             remote: None,
             handler: UdpHandler::new(udp_socket),
@@ -100,7 +101,7 @@ impl<'a> UdpMetadata<'a> {
 
     pub fn send(&self) {
         if let Some(payload) = self.payload {
-            self.handler.send(&payload)
+            self.handler.send(&payload).unwrap();
         }
     }
 
