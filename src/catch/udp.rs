@@ -14,6 +14,9 @@ pub struct UdpDatagram {
 struct UdpHandler {
     // Socket to collect from
     socket: UdpSocket,
+    // Time spent waiting for individual
+    // datagrams to appear
+    pub wait_time: u32,
     // Datagrams and the amount of time
     // it took to read them.
     pub datagrams: Vec<(UdpDatagram, u32)>,
@@ -24,6 +27,7 @@ impl UdpHandler {
     fn new(socket: UdpSocket) -> UdpHandler {
         UdpHandler {
             socket,
+            wait_time: 5,
             datagrams: Default::default(),
         }
     }
@@ -38,7 +42,6 @@ impl UdpHandler {
     }
 
     fn collect(&mut self, amount: u16) -> Result<(), IoErr> {
-        const ONE_MIN: u128 = 15000;
         let big_buf: &mut [u8] = &mut [0u8; 65536];
 
         self.socket.set_nonblocking(true).unwrap();
@@ -58,7 +61,7 @@ impl UdpHandler {
                         break 'timed;
                     }
                     Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => {
-                        if now.elapsed().as_millis() >= ONE_MIN {
+                        if now.elapsed().as_secs() >= self.wait_time as u64 {
                             break 'timed;
                         }
                     }
@@ -85,7 +88,7 @@ impl<'a> UdpMetadata<'a> {
             local: &*socket,
             remote: None,
             handler: UdpHandler::new(udp_socket),
-            amount: 1,
+            amount: 5,
             payload: None,
         }
     }
@@ -107,6 +110,10 @@ impl<'a> UdpMetadata<'a> {
 
     pub fn set_amount(&mut self, amount: u16) {
         self.amount = amount;
+    }
+
+    pub fn set_time(&mut self, time: u32) {
+        self.handler.wait_time = time;
     }
 
     pub fn collect(&mut self) -> Vec<(UdpDatagram, u32)> {

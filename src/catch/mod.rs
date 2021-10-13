@@ -15,6 +15,8 @@ pub struct Options {
     pub remote_socket: Option<String>,
     #[structopt(short = "n", help = "Amount of datagrams to collect")]
     pub amount: Option<u16>,
+    #[structopt(short, long, help = "Time to spend waiting for individual datagrams")]
+    pub time: Option<u32>,
 }
 
 #[derive(Error, Debug)]
@@ -52,14 +54,24 @@ pub fn run(_options: &Options) {
     match _options.protocol {
         Protocol::Udp => {
             let mut udp_metadata = udp::UdpMetadata::new(&_options.local_socket[..]);
-
-            if let Some(amount) = _options.amount {
-                udp_metadata.set_amount(amount);
-            }
+            set_amount_and_time_udp(_options, &mut udp_metadata);
             udp_metadata.collect();
         }
         Protocol::Tcp => {
             println!("tcp")
         }
     }
+}
+
+fn set_amount_and_time_udp(options: &Options, metadata: &mut udp::UdpMetadata) {
+    if let Some(amount) = options.amount {
+        metadata.set_amount(amount);
+    }
+    if let Some(time) = options.time {
+        metadata.set_time(time);
+    }
+}
+
+fn set_amount_and_time_tcp(options: &Options) {
+    todo!()
 }
