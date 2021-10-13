@@ -34,14 +34,10 @@ enum Opt {
 fn main() {
     let opt = Opt::from_args();
     match opt {
-        Opt::Catch(_) => run_catch(),
+        Opt::Catch(options) => catch::run(&options),
         Opt::Trap => run_trap(),
         Opt::Fish => run_fish(),
     }
-}
-
-fn run_catch() {
-    println!("catch");
 }
 
 fn run_trap() {
