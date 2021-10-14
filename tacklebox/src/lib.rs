@@ -75,7 +75,7 @@ impl UdpHandler {
     }
 }
 
-pub struct Metadata<'a> {
+pub struct UdpMetadata<'a> {
     local: &'a str,
     remote: Option<&'a str>,
     handler: UdpHandler,
@@ -83,10 +83,10 @@ pub struct Metadata<'a> {
     payload: Option<&'a [u8]>,
 }
 
-impl<'a> Metadata<'a> {
+impl<'a> UdpMetadata<'a> {
     pub fn new(socket: &'a str) -> Self {
         let udp_socket = UdpSocket::bind(socket).unwrap();
-        Metadata {
+        UdpMetadata {
             local: &*socket,
             remote: None,
             handler: UdpHandler::new(udp_socket),

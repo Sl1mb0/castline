@@ -1,9 +1,7 @@
 extern crate structopt;
 use structopt::StructOpt;
 use thiserror::Error;
-
-pub mod udp;
-// pub mod tcp;
+use tacklebox::{UdpMetadata, UdpDatagram};
 
 #[derive(Debug, StructOpt)]
 pub struct Options {
@@ -53,7 +51,7 @@ impl fmt::Display for Protocol {
 pub fn run(options: &Options) {
     match options.protocol {
         Protocol::Udp => {
-            let mut udp_metadata = udp::Metadata::new(&options.local[..]);
+            let mut udp_metadata = UdpMetadata::new(&options.local[..]);
             set_amount_and_time_udp(options, &mut udp_metadata);
 
             let now = std::time::Instant::now();
@@ -80,7 +78,7 @@ pub fn run(options: &Options) {
     }
 }
 
-fn set_amount_and_time_udp(options: &Options, udp_metadata: &mut udp::Metadata) {
+fn set_amount_and_time_udp(options: &Options, udp_metadata: &mut UdpMetadata) {
     if let Some(amount) = options.amount {
         udp_metadata.set_amount(amount);
     }
@@ -128,7 +126,7 @@ fn print_total_stats(total_time: u64, total_bytes: u32, received: f32) {
     println!();
 }
 
-fn print_datagram_stats(datagrams: Vec<(udp::UdpDatagram, u32)>) {
+fn print_datagram_stats(datagrams: Vec<(UdpDatagram, u32)>) {
     println!();
 
     println!(
@@ -149,6 +147,6 @@ fn print_datagram_stats(datagrams: Vec<(udp::UdpDatagram, u32)>) {
     }
 }
 
-fn print_udp(_datagram: &(udp::UdpDatagram, u32)) {
+fn print_udp(_datagram: &(UdpDatagram, u32)) {
     todo!()
 }
