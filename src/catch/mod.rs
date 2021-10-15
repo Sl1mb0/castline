@@ -1,7 +1,7 @@
 extern crate structopt;
 use structopt::StructOpt;
 use thiserror::Error;
-use tacklebox::{UdpMetadata, UdpDatagram};
+use tacklebox::udp::{UdpMetadata, UdpDatagram};
 
 #[derive(Debug, StructOpt)]
 pub struct Options {
@@ -73,7 +73,8 @@ pub fn run(options: &Options) {
             }
         }
         Protocol::Tcp => {
-            println!("tcp")
+            println!("tcp");
+            set_amount_and_time_tcp(options);
         }
     }
 }
