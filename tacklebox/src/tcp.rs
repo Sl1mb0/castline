@@ -1,6 +1,6 @@
 extern crate etherparse;
 use etherparse::TcpHeader;
-use std::io::{Write, Read, Error, ErrorKind};
+use std::io::{Error, ErrorKind, Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::time::Instant;
 
@@ -19,6 +19,7 @@ struct TcpHandler {
 }
 
 use Error as IoErr;
+use ErrorKind as IoErrKind;
 impl TcpHandler {
     fn new(listener: TcpListener) -> TcpHandler {
         TcpHandler {
@@ -28,7 +29,7 @@ impl TcpHandler {
             datagrams: Default::default(),
         }
     }
-    
+
     fn set_wait_time(&mut self, wait_time: u32) {
         self.wait_time = wait_time;
     }
@@ -36,15 +37,12 @@ impl TcpHandler {
     fn send<'a>(&mut self, data: &'a [u8]) -> Result<usize, IoErr> {
         let mut bytes: usize = 0;
         if let Some(_socket) = &self.socket {
-            bytes = self.socket
-                .as_ref()
-                .unwrap()
-                .write(data)?;
+            bytes = self.socket.as_ref().unwrap().write(data)?;
         }
         Ok(bytes)
     }
 
-    fn wait_for_connection<'a>(&mut self) -> Result<(), IoErr> {
+    fn wait_for_connection(&mut self) -> Result<(), IoErr> {
         let time = Instant::now();
         self.listener.set_nonblocking(true)?;
         while time.elapsed().as_secs() < self.wait_time.into() {
@@ -52,15 +50,13 @@ impl TcpHandler {
                 Ok((new_socket, _addr)) => {
                     self.socket = Some(new_socket);
                     break;
-                },
-                Err(ref e) if e.kind() != ErrorKind::WouldBlock => {
-                    return Err(IoErr::from(e.kind()));
-                },
-                Err(e) => {
+                }
+                Err(ref e) if e.kind() == IoErrKind::WouldBlock => {
                     if time.elapsed().as_secs() >= self.wait_time.into() {
-                        return Err(e);
+                        return Err(IoErr::from(IoErrKind::WouldBlock));
                     }
-                },
+                }
+                Err(e) => return Err(e),
             }
         }
         Ok(())
@@ -69,16 +65,12 @@ impl TcpHandler {
     #[inline]
     fn collect(&mut self, amount: u16) -> Result<(), IoErr> {
         if self.socket.is_none() {
-            return Err(IoErr::from(ErrorKind::NotConnected));
+            return Err(IoErr::from(IoErrKind::NotConnected));
         }
 
         let buf: &mut [u8] = &mut [0u8; 65536];
 
-        self.socket
-            .as_ref()
-            .unwrap()
-            .set_nonblocking(true)
-            .unwrap();
+        self.socket.as_ref().unwrap().set_nonblocking(true).unwrap();
 
         for _ in 0..amount {
             let now = Instant::now();
@@ -87,7 +79,7 @@ impl TcpHandler {
                     Ok(bytes) => {
                         let read_time = now.elapsed().as_millis() as u32;
                         let (header, data) = TcpHeader::read_from_slice(&buf)
-                            .expect("`UdpHeader::read_from_slice()` failed!");
+                            .expect("`TcpHeader::read_from_slice()` failed!");
 
                         let mut data = data.to_vec();
                         data.resize(bytes - 8, 0);
@@ -95,7 +87,7 @@ impl TcpHandler {
                             .push((TcpDatagram { header, data }, read_time));
                         break 'timed;
                     }
-                    Err(ref e) if e.kind() == ErrorKind::WouldBlock => {
+                    Err(ref e) if e.kind() == IoErrKind::WouldBlock => {
                         if now.elapsed().as_secs() >= self.wait_time as u64 {
                             break 'timed;
                         }
@@ -156,3 +148,18 @@ impl<'a> TcpMetadata<'a> {
         Vec::from(&self.handler.datagrams[..])
     }
 }*/
+
+#[cfg(test)]
+#[test]
+fn socket() {
+    // NOTE
+    // Port 80 requires sudo privileges on:
+    // - [x] MacOS
+    // - [ ] Linux
+    let listener = TcpListener::bind("127.0.0.1:80").unwrap();
+    let mut tcp_handler = TcpHandler::new(listener);
+    match tcp_handler.wait_for_connection() {
+        Ok(_) => println!("connection established!"),
+        Err(e) => println!("connection failed with error kind: {:?}!", e),
+    }
+}
