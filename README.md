@@ -28,18 +28,16 @@ in adding windows support though I am happy to review pull requests.
 
 And some original features of it's own:
 
-- Performance oriented:
-  - Provide general perf-related information
+- General performance metrics:
     - Time
     - Memory
     - Packet loss
-  - Can get infra/meta info of port usage:
-    - Which process is using what; what are they doing
-    - Datagram internals: headers and their payloads
-- Intuitive and straightforward CLI:
+- Port usage information:
+    - Which process uses what
+    - What are they doing
+- Simple CLI:
   - Subcommands instead of options (for the most part)
-  - Info is pretty printed; uses colors
-  - Get only what you need; don't bombard stdout.
+  - Get only what you ask for
 
 The original design idea for `nc` was simply a `cat` like utility for networks.
 Given some port on a local machine, display all inbound/outbound information on
