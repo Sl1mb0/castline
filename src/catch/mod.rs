@@ -1,7 +1,11 @@
 extern crate structopt;
 use structopt::StructOpt;
+use tacklebox::tcp::TcpMetadata;
+use tacklebox::udp::{UdpDatagram, UdpMetadata};
 use thiserror::Error;
-use tacklebox::udp::{UdpMetadata, UdpDatagram};
+
+use std::io::Error as IoErr;
+use std::io::ErrorKind as IoErrKind;
 
 #[derive(Debug, StructOpt)]
 pub struct Options {
@@ -51,11 +55,11 @@ impl fmt::Display for Protocol {
 pub fn run(options: &Options) {
     match options.protocol {
         Protocol::Udp => {
-            let mut udp_metadata = UdpMetadata::new(&options.local[..]);
-            set_amount_and_time_udp(options, &mut udp_metadata);
+            let udp_metadata = UdpMetadata::new(&options.local[..]);
+            let (amount, wait_time) = set_amount_and_time(&options);
 
             let now = std::time::Instant::now();
-            let datagrams = udp_metadata.collect();
+            let datagrams = udp_metadata.collect_datagrams(amount, wait_time).unwrap();
             let time = now.elapsed().as_secs();
 
             let mut total_bytes = 0;
@@ -64,7 +68,7 @@ pub fn run(options: &Options) {
                 total_bytes += datagram.0.data.len() as u32 + 8;
             }
 
-            let received = datagrams.len() as f32 / options.amount.unwrap() as f32;
+            let received = datagrams.len() as f32 / amount as f32;
 
             if !options.verbose {
                 print_total_stats(time, total_bytes, received);
@@ -73,23 +77,33 @@ pub fn run(options: &Options) {
             }
         }
         Protocol::Tcp => {
-            println!("tcp");
-            set_amount_and_time_tcp(options);
+            let mut tcp_metadata = TcpMetadata::new(&options.local[..]);
+            let (_amount, wait_time) = set_amount_and_time(&options);
+
+            let _block = IoErr::from(IoErrKind::WouldBlock);
+
+            let now = std::time::Instant::now();
+            if let Err(_block) = tcp_metadata.wait_for_connection(wait_time) {}
+            let time = now.elapsed().as_secs();
+
+            if !options.verbose {
+                print_total_stats(time, 0, 0.0);
+            } else {
+                println!("verbose!");
+            }
         }
     }
 }
 
-fn set_amount_and_time_udp(options: &Options, udp_metadata: &mut UdpMetadata) {
-    if let Some(amount) = options.amount {
-        udp_metadata.set_amount(amount);
+fn set_amount_and_time(options: &Options) -> (u16, u32) {
+    let (mut amount, mut time): (u16, u32) = (5, 5);
+    if let Some(a) = options.amount {
+        amount = a;
     }
-    if let Some(time) = options.time {
-        udp_metadata.set_time(time);
+    if let Some(t) = options.time {
+        time = t;
     }
-}
-
-fn set_amount_and_time_tcp(_options: &Options) {
-    todo!()
+    (amount, time)
 }
 
 fn print_total_stats(total_time: u64, total_bytes: u32, received: f32) {
