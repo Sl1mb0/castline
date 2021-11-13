@@ -49,7 +49,7 @@ impl<'a> TcpMetadata<'a> {
                 }
                 Err(ref e) if e.kind() == IoErrKind::WouldBlock => {
                     if time.elapsed().as_secs() >= wait_time.into() {
-                        return Err(IoErr::from(IoErrKind::WouldBlock));
+                        return Err(IoErr::from(IoErrKind::TimedOut));
                     }
                 }
                 Err(e) => return Err(e),
