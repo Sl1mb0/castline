@@ -9,6 +9,7 @@
 
 use structopt::StructOpt;
 
+mod cast;
 mod catch;
 
 /// Define command line options.
@@ -20,7 +21,7 @@ enum Opt {
     )]
     Catch(catch::Options),
     #[structopt(name = "cast", about = "Send []to [HOST]")]
-    Cast,
+    Cast(cast::Options),
     #[structopt(
         name = "trap",
         about = "Given argument [AMOUNT]:[SIZE]; displays percentage of packets not acknowledged"
@@ -37,14 +38,10 @@ fn main() {
     let opt = Opt::from_args();
     match opt {
         Opt::Catch(options) => catch::run(&options),
-        Opt::Cast => run_cast(),
+        Opt::Cast(options) => cast::run(&options),
         Opt::Trap => run_trap(),
         Opt::Fish => run_fish(),
     }
-}
-
-fn run_cast() {
-    println!("cast");
 }
 
 fn run_trap() {
