@@ -7,7 +7,7 @@ use `castline`, and what each subcommand is capable of.
 
 #### `catch`
 
-Display information for inbound datagrams on the specified port.
+Time and memory metrics for inbound datagrams on the specified port.
 
 Use `-n` to specify the _amount_ of datarams to collect at a time;
 use `--time` (or `-t`) to specify the _duration_ to spend waiting
@@ -16,9 +16,10 @@ default amount is 5 datagrams for a duration of 5 seconds each.
 
 As an example, the following command will attempt to read 5 datagrams
 at a time; and wait 30 seconds for each datagram to appear in
-the socket's buffer. I.e. if the amount of time it takes for each datagram
-to appear in the buffer is 30 seconds each, then the amount of time spent
-collecting the 5 datagrams would be 5x30 = 150 total seconds.
+the socket's buffer. I.e. if the amount of time it takes for each
+datagram to appear in the buffer is at most 30 seconds each, then the
+amount of time spent collecting the 5 datagrams would be 5x30 = 150
+total seconds.
 
 ```
 $ castline catch udp 127.0.0.1:3400 -n 5 --time 30
@@ -26,25 +27,15 @@ $ castline catch udp 127.0.0.1:3400 -n 5 --time 30
 time    bytes   received
 ========================
 30s     627     40%
-
-$ castline catch udp 127.0.0.1:3400 -vn 5 --time 30
-
-src                dst              len         chksm       time    bytes
-=========================================================================
-127.0.0.1:3400     555.92.654.71    523         9999999     20s     531
--------------------------------------------------------------------------
-127.0.0.1:8900     534.70.60.234    90          9999999     10s     98
 ```
 
-Datagram internals and the time spent waiting for them will then
-"pretty print" to the console.
 
 ##### Options
 
 | Flag | Description |
 |------|-------------|
-| `-n`   |  Specifiy an amount of datagrams to collect |
-|`--time`  | Specify how long to spend waiting for each datagram to appear |
+| `-n`   |  Specify the amount of datagrams to be collected|
+|`--time`  | Specify duration to wait for datagrams to appear |
 
 
 
@@ -52,12 +43,23 @@ Datagram internals and the time spent waiting for them will then
 
 Send some dummy packets somewhere and see what happens. Use the `-n`
 flag to specify the amount of packets you want to send. Can also specify
-a time similar to `catch`; but in this case it is simply the time spent
-waiting for a response on the socket after sending the data.
+amount time to wait for responses to appear by using the `--time` flag.
+
+Responses will print to `stdout` as long as they continue to come.
 
 ```
-$ castline cast tcp 127.0.0.1:3000 "HEYTHEREBUCKO"
+$ castline cast tcp 127.0.0.1:3000 "GET http://www.w3.org/pub/WWW/TheProject.html HTTP/1.1"
 ```
+
+
+##### Options
+
+| Flag | Description |
+|------|-------------|
+| `-n`   |  Specify the amount of datagrams to be collected|
+|`--time`  | Specify duration to wait for datagrams to appear |
+
+
 
 #### `trap`
 
