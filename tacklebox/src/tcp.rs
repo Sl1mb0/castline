@@ -1,6 +1,6 @@
 extern crate etherparse;
 use etherparse::TcpHeader;
-use std::io::{Error, ErrorKind, Read, Write};
+use std::io::{Error, ErrorKind, Read};
 use std::net::{TcpListener, TcpStream};
 use std::time::Instant;
 
@@ -28,16 +28,6 @@ impl<'a> TcpMetadata<'a> {
             listener,
             socket: None,
         }
-    }
-
-    pub fn send(&mut self, data: &'a [u8], amount: u16) -> Result<usize, IoErr> {
-        let mut bytes: usize = 0;
-        for _ in 0..amount {
-            if let Some(_socket) = &self.socket {
-                bytes += self.socket.as_ref().unwrap().write(data)?;
-            }
-        }
-        Ok(bytes)
     }
 
     pub fn wait_for_connection(&mut self, wait_time: u32) -> Result<(), IoErr> {

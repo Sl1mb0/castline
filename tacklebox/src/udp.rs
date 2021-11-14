@@ -25,15 +25,7 @@ impl<'a> UdpMetadata<'a> {
         }
     }
 
-    fn send(&'a self, payload: &'a [u8], amount: u16) -> Result<usize, IoErr> {
-        let mut bytes = 0;
-        for _ in 0..amount {
-            bytes += self.socket.send(payload)?;
-        }
-        Ok(bytes)
-    }
-
-    fn connect_to(&'a self, remote: &'a str) -> Result<(), IoErr> {
+    pub fn connect_to(&'a self, remote: &'a str) -> Result<(), IoErr> {
         self.socket.connect(remote)?;
         Ok(())
     }
