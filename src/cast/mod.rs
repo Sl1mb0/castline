@@ -4,9 +4,6 @@ use tacklebox::tcp::TcpMetadata;
 use tacklebox::udp::UdpMetadata;
 use tacklebox::Protocol;
 
-//use std::io::Error as IoErr;
-//use std::io::ErrorKind as IoErrKind;
-
 #[derive(Debug, StructOpt)]
 pub struct Options {
     #[structopt(help = "Tranport protocol used")]
@@ -19,8 +16,10 @@ pub struct Options {
     pub time: Option<u32>,
 }
 
-pub fn run(options: &Options) {
-    let (_amount, _wait_time) = set_amount_and_time(&options);
+pub fn run(options: &mut Options) {
+    let _amount = *options.amount.get_or_insert(5);
+    let _wait_time = *options.time.get_or_insert(5);
+
     match options.protocol {
         Protocol::Udp => {
             let _udp_metadata = UdpMetadata::new(&options.local[..]);
@@ -31,15 +30,4 @@ pub fn run(options: &Options) {
             todo!()
         }
     }
-}
-
-fn set_amount_and_time(options: &Options) -> (u16, u32) {
-    let (mut amount, mut time): (u16, u32) = (5, 5);
-    if let Some(a) = options.amount {
-        amount = a;
-    }
-    if let Some(t) = options.time {
-        time = t;
-    }
-    (amount, time)
 }

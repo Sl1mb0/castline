@@ -38,7 +38,7 @@ fn main() {
     let opt = Opt::from_args();
     match opt {
         Opt::Catch(mut options) => catch::run(&mut options),
-        Opt::Cast(options) => cast::run(&options),
+        Opt::Cast(mut options) => cast::run(&mut options),
         Opt::Trap => run_trap(),
         Opt::Fish => run_fish(),
     }

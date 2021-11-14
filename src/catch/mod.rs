@@ -4,8 +4,7 @@ use tacklebox::tcp::TcpMetadata;
 use tacklebox::udp::UdpMetadata;
 use tacklebox::Protocol;
 
-use std::io::Error as IoErr;
-use std::io::ErrorKind as IoErrKind;
+use std::time::Instant;
 
 #[derive(Debug, StructOpt)]
 pub struct Options {
@@ -20,38 +19,44 @@ pub struct Options {
 }
 
 pub fn run(options: &mut Options) {
-    let _amount = *options.amount.get_or_insert(5);
+    let amount = *options.amount.get_or_insert(5);
     let wait_time = *options.time.get_or_insert(5);
 
     match options.protocol {
         Protocol::Udp => {
             let udp_metadata = UdpMetadata::new(&options.local[..]);
 
-            let now = std::time::Instant::now();
-            let datagrams = udp_metadata.receive(_amount, wait_time).unwrap();
+            let now = Instant::now();
+            let datagrams = udp_metadata.receive(amount, wait_time).unwrap();
             let time = now.elapsed().as_secs();
 
             let mut total_bytes = 0;
             for datagram in &datagrams {
                 total_bytes += datagram.0.data.len() as u32;
             }
-
-            let received = datagrams.len() as f32 / _amount as f32;
+            let received = datagrams.len() as f32 / amount as f32;
 
             print_total_stats(time, total_bytes, received);
         }
         Protocol::Tcp => {
             let mut tcp_metadata = TcpMetadata::new(&options.local[..]);
 
-            let _block = IoErr::from(IoErrKind::WouldBlock);
+            let now = Instant::now();
+            // FIXME handle timeout error
+            tcp_metadata.wait_for_connection(wait_time).ok();
+            let connection_time = now.elapsed().as_secs();
 
-            let now = std::time::Instant::now();
-            if let Err(_block) = tcp_metadata.wait_for_connection(wait_time) {}
-            let time = now.elapsed().as_secs();
+            let now = Instant::now();
+            let datagrams = tcp_metadata.receive(amount, wait_time).unwrap();
+            let read_time = now.elapsed().as_secs();
 
-            // TODO add support for receiving tcp packets
+            let mut total_bytes = 0;
+            for datagram in &datagrams {
+                total_bytes += datagram.0.data.len() as u32;
+            }
+            let received = datagrams.len() as f32 / amount as f32;
 
-            print_total_stats(time, 0, 0.0);
+            print_total_stats(read_time + connection_time, total_bytes, received);
         }
     }
 }
