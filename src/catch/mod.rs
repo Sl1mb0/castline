@@ -19,14 +19,16 @@ pub struct Options {
     pub time: Option<u32>,
 }
 
-pub fn run(options: &Options) {
-    let (_amount, wait_time) = set_amount_and_time(&options);
+pub fn run(options: &mut Options) {
+    let _amount = *options.amount.get_or_insert(5);
+    let wait_time = *options.time.get_or_insert(5);
+
     match options.protocol {
         Protocol::Udp => {
             let udp_metadata = UdpMetadata::new(&options.local[..]);
 
             let now = std::time::Instant::now();
-            let datagrams = udp_metadata.collect_datagrams(_amount, wait_time).unwrap();
+            let datagrams = udp_metadata.receive(_amount, wait_time).unwrap();
             let time = now.elapsed().as_secs();
 
             let mut total_bytes = 0;
@@ -47,20 +49,11 @@ pub fn run(options: &Options) {
             if let Err(_block) = tcp_metadata.wait_for_connection(wait_time) {}
             let time = now.elapsed().as_secs();
 
+            // TODO add support for receiving tcp packets
+
             print_total_stats(time, 0, 0.0);
         }
     }
-}
-
-fn set_amount_and_time(options: &Options) -> (u16, u32) {
-    let (mut amount, mut time): (u16, u32) = (5, 5);
-    if let Some(a) = options.amount {
-        amount = a;
-    }
-    if let Some(t) = options.time {
-        time = t;
-    }
-    (amount, time)
 }
 
 fn print_total_stats(total_time: u64, total_bytes: u32, received: f32) {

@@ -30,10 +30,12 @@ impl<'a> TcpMetadata<'a> {
         }
     }
 
-    pub fn send(&mut self, data: &'a [u8]) -> Result<usize, IoErr> {
+    pub fn send(&mut self, data: &'a [u8], amount: u16) -> Result<usize, IoErr> {
         let mut bytes: usize = 0;
-        if let Some(_socket) = &self.socket {
-            bytes = self.socket.as_ref().unwrap().write(data)?;
+        for _ in 0..amount {
+            if let Some(_socket) = &self.socket {
+                bytes += self.socket.as_ref().unwrap().write(data)?;
+            }
         }
         Ok(bytes)
     }
@@ -59,7 +61,7 @@ impl<'a> TcpMetadata<'a> {
     }
 
     #[inline]
-    pub fn collect_datagrams(
+    pub fn receive(
         &mut self,
         amount: u16,
         wait_time: u32,

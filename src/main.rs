@@ -37,7 +37,7 @@ enum Opt {
 fn main() {
     let opt = Opt::from_args();
     match opt {
-        Opt::Catch(options) => catch::run(&options),
+        Opt::Catch(mut options) => catch::run(&mut options),
         Opt::Cast(options) => cast::run(&options),
         Opt::Trap => run_trap(),
         Opt::Fish => run_fish(),

@@ -25,8 +25,11 @@ impl<'a> UdpMetadata<'a> {
         }
     }
 
-    fn send(&'a self, payload: &'a [u8]) -> Result<usize, IoErr> {
-        let bytes = self.socket.send(payload)?;
+    fn send(&'a self, payload: &'a [u8], amount: u16) -> Result<usize, IoErr> {
+        let mut bytes = 0;
+        for _ in 0..amount {
+            bytes += self.socket.send(payload)?;
+        }
         Ok(bytes)
     }
 
@@ -36,7 +39,7 @@ impl<'a> UdpMetadata<'a> {
     }
 
     #[inline]
-    pub fn collect_datagrams(
+    pub fn receive(
         &self,
         amount: u16,
         wait_time: u32,
