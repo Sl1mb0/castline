@@ -9,3 +9,4 @@ edition = "2018"
 thiserror = "1.0.24"
 structopt = "0.3.21"
 tacklebox = { path = "tacklebox" }
+rand = "0.7.3"
