@@ -1,5 +1,4 @@
 extern crate structopt;
-use rand::Rng;
 use structopt::StructOpt;
 use tacklebox::tcp::TcpSession;
 use tacklebox::udp::UdpSession;

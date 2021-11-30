@@ -1,4 +1,5 @@
 use thiserror::Error;
+use rand::Rng;
 
 use std::fmt;
 use std::fmt::{Display, Formatter};
@@ -36,6 +37,14 @@ impl Display for Protocol {
 
 pub trait Sender<'a> {
     fn send(&mut self, data: &'a [u8]) -> Result<usize, IoErr>;
+}
+
+pub fn random_local() -> String {
+    let mut local = String::from("127.0.0.1:");
+    let mut rng = rand::thread_rng();
+    let port: u16 = rng.gen_range(2000, 65353);
+    local.push_str(&port.to_string()[..]);
+    local
 }
 
 pub mod tcp;
