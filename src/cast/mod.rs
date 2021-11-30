@@ -51,7 +51,12 @@ pub fn run(options: &mut Options) {
         }
         Protocol::Tcp => {
             let mut writer = TcpSession::new(&local_writer[..]);
-            writer.connect_to(&options.remote[..]).unwrap();
+            let connection = writer.connect_to(&options.remote[..]);
+            if connection.is_err() {
+                let connect_err = connection.unwrap_err();
+                println!("\nConnection not established : {}\n", connect_err);
+                return;
+            }
 
             let mut local_reader = String::from("127.0.0.1:");
             local_reader.push_str(&writer.remote_port.unwrap().to_string()[..]);
