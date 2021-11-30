@@ -5,6 +5,7 @@ use tacklebox::tcp::TcpSession;
 use tacklebox::udp::UdpSession;
 use tacklebox::Protocol;
 use tacklebox::Sender;
+use tacklebox::random_local;
 
 #[derive(Debug, StructOpt)]
 pub struct Options {
@@ -72,12 +73,4 @@ pub fn run(options: &mut Options) {
             }
         }
     }
-}
-
-fn random_local() -> String {
-    let mut local = String::from("127.0.0.1:");
-    let mut rng = rand::thread_rng();
-    let port: u16 = rng.gen_range(2000, 65353);
-    local.push_str(&port.to_string()[..]);
-    local
 }
