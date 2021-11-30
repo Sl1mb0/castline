@@ -1,7 +1,7 @@
 extern crate structopt;
 use structopt::StructOpt;
-use tacklebox::tcp::TcpMetadata;
-use tacklebox::udp::UdpMetadata;
+use tacklebox::tcp::{TcpDatagram, TcpSession};
+use tacklebox::udp::{UdpDatagram, UdpSession};
 use tacklebox::Protocol;
 
 use std::time::Instant;
@@ -24,44 +24,49 @@ pub fn run(options: &mut Options) {
 
     match options.protocol {
         Protocol::Udp => {
-            let udp_metadata = UdpMetadata::new(&options.local[..]);
-
-            let now = Instant::now();
-            let datagrams = udp_metadata.receive(amount, wait_time).unwrap();
-            let time = now.elapsed().as_secs();
+            let session = UdpSession::new(&options.local[..]);
+            let mut packets: Vec<UdpDatagram> = Vec::new();
 
             let mut total_bytes = 0;
-            for datagram in &datagrams {
-                total_bytes += datagram.0.data.len() as u32;
+            let now = Instant::now();
+            for _ in 0..amount {
+                let (packet, bytes) = session.receive(wait_time).unwrap();
+                packets.push(packet);
+                total_bytes += bytes;
             }
-            let received = datagrams.len() as f32 / amount as f32;
+            let total_time = now.elapsed().as_secs();
+            let received = packets.len() as f32 / amount as f32;
 
-            print_total_stats(time, total_bytes, received);
+            print_total_stats(total_time as u32, total_bytes, received);
         }
         Protocol::Tcp => {
-            let mut tcp_metadata = TcpMetadata::new(&options.local[..]);
+            let mut session = TcpSession::new(&options.local[..]);
+            let mut packets: Vec<TcpDatagram> = Vec::new();
 
-            let now = Instant::now();
-            // FIXME handle timeout error
-            tcp_metadata.wait_for_connection(wait_time).ok();
-            let connection_time = now.elapsed().as_secs();
-
-            let now = Instant::now();
-            let datagrams = tcp_metadata.receive(amount, wait_time).unwrap();
-            let read_time = now.elapsed().as_secs();
+            let connection_time = match session.wait_for_connection(wait_time) {
+                Ok(s) => s,
+                Err(e) => {
+                    println!("\nTCP connection not established : {}\n", e);
+                    return;
+                }
+            };
 
             let mut total_bytes = 0;
-            for datagram in &datagrams {
-                total_bytes += datagram.0.data.len() as u32;
+            let now = Instant::now();
+            for _ in 0..amount {
+                let (packet, bytes) = session.receive(wait_time).unwrap();
+                packets.push(packet);
+                total_bytes += bytes;
             }
-            let received = datagrams.len() as f32 / amount as f32;
+            let read_time = now.elapsed().as_secs() as u32;
+            let received = packets.len() as f32 / amount as f32;
 
             print_total_stats(read_time + connection_time, total_bytes, received);
         }
     }
 }
 
-fn print_total_stats(total_time: u64, total_bytes: u32, received: f32) {
+fn print_total_stats(total_time: u32, total_bytes: u32, received: f32) {
     println!();
 
     println!(
