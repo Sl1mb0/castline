@@ -1,4 +1,5 @@
 extern crate etherparse;
+use etherparse::PacketBuilder;
 use etherparse::TcpHeader;
 use std::io::{Error, ErrorKind, Read};
 use std::net::{TcpListener, TcpStream};
@@ -117,10 +118,27 @@ impl<'a> TcpSession<'a> {
 }
 
 impl<'a> Sender<'a> for TcpSession<'a> {
-    fn send(&mut self, data: &'a [u8]) -> Result<usize, IoErr> {
+    fn send(&mut self, payload: &'a [u8]) -> Result<usize, IoErr> {
+        let builder = PacketBuilder::ipv4(
+            self.local_ipv4,
+            self.remote_ipv4
+                .expect("No destination address specified in `Sender::send()`!"),
+            20, //FIXME allow user to specify TTL
+        )
+        .tcp(
+            self.local_port,
+            self.remote_port
+                .expect("No destination port specified in `Sender::send()`!"),
+            1, // Sequence Number
+            u16::MAX, // Window Size
+        );
+
+        let mut packet = Vec::<u8>::with_capacity(builder.size(payload.len()));
+        builder.write(&mut packet, &payload).unwrap();
+
         let mut bytes: usize = 0;
         if let Some(_socket) = &self.socket {
-            bytes += self.socket.as_ref().unwrap().write(data)?;
+            bytes = self.socket.as_ref().unwrap().write(&packet)?;
         }
         Ok(bytes)
     }
