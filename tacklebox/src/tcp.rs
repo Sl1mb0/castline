@@ -2,7 +2,12 @@ extern crate etherparse;
 use etherparse::TcpHeader;
 use std::io::{Error, ErrorKind, Read};
 use std::net::{TcpListener, TcpStream};
+use std::net::Ipv4Addr;
 use std::time::Instant;
+use std::io::Write;
+use std::str::FromStr;
+
+use crate::Sender;
 
 use Error as IoErr;
 use ErrorKind as IoErrKind;
@@ -13,24 +18,48 @@ pub struct TcpDatagram {
     pub data: Vec<u8>,
 }
 
-pub struct TcpMetadata<'a> {
-    _addr: &'a str,
+pub struct TcpSession<'a> {
+    pub local_addr: &'a str,
+    pub local_ipv4: [u8; 4], 
+    pub local_port: u16,
+    pub remote_addr: Option<&'a str>,
+    pub remote_ipv4: Option<[u8; 4]>,
+    pub remote_port: Option<u16>,
     listener: TcpListener,
-    pub socket: Option<TcpStream>,
+    socket: Option<TcpStream>,
 }
 
 #[allow(dead_code)]
-impl<'a> TcpMetadata<'a> {
-    pub fn new(local: &'a str) -> TcpMetadata {
+impl<'a> TcpSession<'a> {
+    pub fn new(local: &'a str) -> TcpSession {
         let listener = TcpListener::bind(local).unwrap();
-        TcpMetadata {
-            _addr: &*local,
+
+        let (ipv4, port) = local.split_once(':').unwrap();
+        let local_ipv4 = Ipv4Addr::from_str(&ipv4).unwrap().octets();
+        let local_port = u16::from_str(&port).unwrap();
+
+        TcpSession {
+            local_addr: &*local,
+            local_ipv4,
+            local_port,
+            remote_addr: None,
+            remote_ipv4: None,
+            remote_port: None,
             listener,
             socket: None,
         }
     }
 
-    pub fn wait_for_connection(&mut self, wait_time: u32) -> Result<(), IoErr> {
+    pub fn connect_to(&mut self, remote: &'a str) -> Result<(), IoErr> {
+        self.remote_addr = Some(remote);
+        let (ipv4, port) = remote.split_once(':').unwrap();
+        self.remote_ipv4 = Some(Ipv4Addr::from_str(&ipv4).unwrap().octets());
+        self.remote_port = Some(u16::from_str(&port).unwrap());
+        self.socket = Some(TcpStream::connect(remote)?);
+        Ok(())
+    }
+
+    pub fn wait_for_connection(&mut self, wait_time: u32) -> Result<u32, IoErr> {
         let time = Instant::now();
         self.listener.set_nonblocking(true)?;
         while time.elapsed().as_secs() < wait_time.into() {
@@ -47,47 +76,52 @@ impl<'a> TcpMetadata<'a> {
                 Err(e) => return Err(e),
             }
         }
-        Ok(())
+        Ok(time.elapsed().as_secs() as u32)
     }
 
     #[inline]
     pub fn receive(
         &mut self,
-        amount: u16,
         wait_time: u32,
-    ) -> Result<Vec<(TcpDatagram, u32)>, IoErr> {
+    ) -> Result<(TcpDatagram, u32), IoErr> {
         if self.socket.is_none() {
             return Err(IoErr::from(IoErrKind::NotConnected));
         }
 
-        let mut datagrams: Vec<(TcpDatagram, u32)> = Vec::new();
         let buf: &mut [u8] = &mut [0u8; 65536];
 
         self.socket.as_ref().unwrap().set_nonblocking(true).unwrap();
-
-        for _ in 0..amount {
-            let now = Instant::now();
-            'timed: loop {
-                match self.socket.as_ref().unwrap().read(&mut buf[..]) {
-                    Ok(bytes) => {
+        let now = Instant::now();
+        loop {
+            match self.socket.as_ref().unwrap().read(&mut buf[..]) {
+                Ok(bytes) => {
                         let read_time = now.elapsed().as_millis() as u32;
                         let (header, data) = TcpHeader::read_from_slice(&buf)
                             .expect("`TcpHeader::read_from_slice()` failed!");
 
                         let mut data = data.to_vec();
                         data.resize(bytes - 8, 0);
-                        datagrams.push((TcpDatagram { header, data }, read_time));
-                        break 'timed;
-                    }
-                    Err(ref e) if e.kind() == IoErrKind::WouldBlock => {
-                        if now.elapsed().as_secs() >= wait_time.into() {
-                            break 'timed;
-                        }
-                    }
-                    Err(e) => return Err(e),
+
+                        let datagram = (TcpDatagram {header, data}, read_time);
+                        return Ok(datagram);
                 }
+                Err(ref e) if e.kind() == IoErrKind::WouldBlock => {
+                    if now.elapsed().as_secs() >= wait_time.into() {
+                        return Err(IoErr::from(IoErrKind::TimedOut));
+                    }
+                }
+                Err(e) => return Err(e),
             }
         }
-        Ok(datagrams)
+    }
+}
+
+impl<'a> Sender<'a> for TcpSession<'a> {
+    fn send(&mut self, data: &'a [u8]) -> Result<usize, IoErr> {
+        let mut bytes: usize = 0;
+        if let Some(_socket) = &self.socket {
+            bytes += self.socket.as_ref().unwrap().write(data)?;
+        }
+        Ok(bytes)
     }
 }
