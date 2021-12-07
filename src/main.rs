@@ -11,6 +11,8 @@ use structopt::StructOpt;
 
 mod cast;
 mod catch;
+mod fish;
+mod trap;
 
 /// Define command line options.
 #[derive(Debug, StructOpt)]
@@ -20,18 +22,18 @@ enum Opt {
         about = "Displays internal information of datagrams on the specified port"
     )]
     Catch(catch::Options),
-    #[structopt(name = "cast", about = "Send []to [HOST]")]
+    #[structopt(name = "cast", about = "Send [DATA] to [HOST]")]
     Cast(cast::Options),
     #[structopt(
         name = "trap",
         about = "Given argument [AMOUNT]:[SIZE]; displays percentage of packets not acknowledged"
     )]
-    Trap,
+    Trap(trap::Options),
     #[structopt(
         name = "fish",
         about = "Displays meta-information about specified port's usage"
     )]
-    Fish,
+    Fish(fish::Options),
 }
 
 fn main() {
@@ -39,15 +41,7 @@ fn main() {
     match opt {
         Opt::Catch(mut options) => catch::run(&mut options),
         Opt::Cast(mut options) => cast::run(&mut options),
-        Opt::Trap => run_trap(),
-        Opt::Fish => run_fish(),
+        Opt::Trap(mut options) => trap::run(&mut options),
+        Opt::Fish(mut options) => fish::run(&mut options),
     }
-}
-
-fn run_trap() {
-    println!("trap");
-}
-
-fn run_fish() {
-    println!("fish");
 }
