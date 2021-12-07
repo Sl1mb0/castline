@@ -26,7 +26,6 @@ pub struct UdpSession<'a> {
     socket: UdpSocket,
 }
 
-#[allow(dead_code)]
 impl<'a> UdpSession<'a> {
     pub fn new(local: &'a str) -> Self {
         let socket = UdpSocket::bind(local).expect("bind() failed!");

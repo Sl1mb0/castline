@@ -4,6 +4,7 @@ use tacklebox::tcp::{TcpDatagram, TcpSession};
 use tacklebox::udp::{UdpDatagram, UdpSession};
 use tacklebox::Protocol;
 
+use std::io::ErrorKind as IoErrKind;
 use std::time::Instant;
 
 #[derive(Debug, StructOpt)]
@@ -30,21 +31,32 @@ pub fn run(options: &mut Options) {
             let mut total_bytes = 0;
             let now = Instant::now();
             for _ in 0..amount {
-                let (packet, bytes) = session.receive(wait_time).unwrap();
-                packets.push(packet);
-                total_bytes += bytes;
+                match session.receive(wait_time) {
+                    Ok((packet, bytes)) => {
+                        packets.push(packet);
+                        total_bytes += bytes;
+                    }
+                    Err(ref e) if e.kind() != IoErrKind::TimedOut => {
+                        println!("Unexpected Error : {}\n", *e);
+                        return;
+                    }
+                    Err(_) => {}
+                }
             }
             let total_time = now.elapsed().as_secs();
             let received = packets.len() as f32 / amount as f32;
 
-            print_total_stats(total_time as u32, total_bytes, received);
+            let avg_time = total_time as f32 / received;
+
+            print_header();
+            print_stats(avg_time, total_bytes, received);
         }
         Protocol::Tcp => {
             let mut session = TcpSession::new(&options.local[..]);
             let mut packets: Vec<TcpDatagram> = Vec::new();
 
-            let connection_time = match session.wait_for_connection(wait_time) {
-                Ok(s) => s,
+            match session.wait_for_connection(wait_time) {
+                Ok(s) => println!("TCP connection esstablished in : {} seconds", s),
                 Err(e) => {
                     println!("\nTCP connection not established : {}\n", e);
                     return;
@@ -60,42 +72,39 @@ pub fn run(options: &mut Options) {
             }
             let read_time = now.elapsed().as_secs() as u32;
             let received = packets.len() as f32 / amount as f32;
+            let avg_time = read_time as f32 / received;
 
-            print_total_stats(read_time + connection_time, total_bytes, received);
+            print_header();
+            print_stats(avg_time, total_bytes, received);
         }
     }
 }
 
-fn print_total_stats(total_time: u32, total_bytes: u32, received: f32) {
+fn print_header() {
     println!();
 
     println!(
-        "{time:>width$}{bytes:>width$}{received:>width$}",
-        time = "time",
-        bytes = "bytes",
-        received = "received",
-        width = 10
+        "{time:<width$}{bytes:<width$}{received:<width$}",
+        time = "AVG TIME",
+        bytes = "TOTAL BYTES",
+        received = "PACKETS RECEIVED",
+        width = 20
     );
+}
 
-    println!(
-        "{line: >space_width$}{line:=>header_width$}",
-        line = "",
-        space_width = 6,
-        header_width = 24
-    );
-
+fn print_stats(avg_time: f32, total_bytes: u32, received: f32) {
     let mut received = received.to_string();
     received.push_str("%");
 
-    let mut total_time = total_time.to_string();
-    total_time.push_str("s");
+    let mut avg_time = avg_time.to_string();
+    avg_time.push_str("s");
 
     println!(
-        "{time:>width$}{bytes:>width$}{received:>width$}",
-        time = &total_time[..],
+        "{time:<width$}{bytes:<width$}{received:<width$}",
+        time = &avg_time[..],
         bytes = total_bytes,
         received = received,
-        width = 10
+        width = 20
     );
 
     println!();

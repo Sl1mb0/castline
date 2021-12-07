@@ -1,10 +1,10 @@
 extern crate structopt;
 use structopt::StructOpt;
+use tacklebox::random_local;
 use tacklebox::tcp::TcpSession;
 use tacklebox::udp::UdpSession;
 use tacklebox::Protocol;
 use tacklebox::Sender;
-use tacklebox::random_local;
 
 #[derive(Debug, StructOpt)]
 pub struct Options {
@@ -40,13 +40,15 @@ pub fn run(options: &mut Options) {
             local_reader.push_str(&writer.remote_port.unwrap().to_string()[..]);
             let reader = UdpSession::new(&local_reader[..]);
 
-            for _ in 0..amount {
+            print_header();
+
+            for i in 0..amount {
                 writer
                     .send(options.payload.as_bytes())
                     .expect("send failed!");
-                let (packet, _bytes) = reader.receive(wait_time).expect("receive failed!");
+                let (packet, receive_time) = reader.receive(wait_time).expect("receive failed!");
                 let packet_data = String::from_utf8_lossy(&packet.data);
-                println!("{}", packet_data);
+                print_stats(i, receive_time, packet_data.to_string().as_bytes().len());
             }
         }
         Protocol::Tcp => {
@@ -54,7 +56,7 @@ pub fn run(options: &mut Options) {
             let connection = writer.connect_to(&options.remote[..]);
             if connection.is_err() {
                 let connect_err = connection.unwrap_err();
-                println!("\nConnection not established : {}\n", connect_err);
+                println!("\nConnection not established : {}", connect_err);
                 return;
             }
 
@@ -72,4 +74,29 @@ pub fn run(options: &mut Options) {
             }
         }
     }
+}
+
+fn print_header() {
+    println!();
+
+    println!(
+        "{number:<width$}{time:<width$}{bytes:<width$}",
+        number = "PACKET NUMBER",
+        time = "WAIT TIME",
+        bytes = "BYTES READ",
+        width = 20
+    );
+}
+
+fn print_stats(packet_number: u16, wait_time: u32, bytes: usize) {
+    let mut wait_time = wait_time.to_string();
+    wait_time.push_str("s");
+
+    println!(
+        "{number:<width$}{time:<width$}{bytes:<width$}",
+        number = packet_number,
+        time = &wait_time[..],
+        bytes = bytes,
+        width = 20
+    );
 }

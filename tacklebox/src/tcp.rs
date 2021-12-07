@@ -30,7 +30,6 @@ pub struct TcpSession<'a> {
     socket: Option<TcpStream>,
 }
 
-#[allow(dead_code)]
 impl<'a> TcpSession<'a> {
     pub fn new(local: &'a str) -> TcpSession {
         let listener = TcpListener::bind(local).unwrap();
